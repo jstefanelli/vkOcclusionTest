@@ -1,0 +1,18 @@
+#version 450
+
+layout (set = 0, binding = 0, r32f) uniform readonly restrict image2D highLevelTexture;
+layout (set = 0, binding = 1, r32f) uniform writeonly restrict image2D targetTexture;
+
+layout (local_size_x = 16, local_size_Y = 16, local_size_z = 1) in;
+
+void main() {
+	uvec2 coords = gl_GlobalInvocationID.xy * 2;
+	ivec2 targetCoords = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+
+	float sample0 = imageLoad(highLevelTexture, ivec2(coords.x, coords.y)).x;
+	float sample1 = imageLoad(highLevelTexture, ivec2(coords.x + 1, coords.y)).x;
+	float sample2 = imageLoad(highLevelTexture, ivec2(coords.x, coords.y + 1)).x;
+	float sample3 = imageLoad(highLevelTexture, ivec2(coords.x + 1, coords.y + 1)).x;
+
+	imageStore(targetTexture, targetCoords, vec4(max(max(sample0, sample1), max(sample2, sample3))));
+}

@@ -1,0 +1,14 @@
+#version 450
+
+layout (set = 0, binding = 0) uniform sampler2D highLevelTexture;
+layout (set = 0, binding = 1, r32f) uniform writeonly image2D targetTexture;
+
+layout (local_size_x = 16, local_size_Y = 16, local_size_z = 1) in;
+
+void main() {
+	uvec2 coords = gl_GlobalInvocationID.xy;
+
+	vec4 val = texelFetch(highLevelTexture, ivec2(coords.x, coords.y), 0);
+
+	imageStore(targetTexture, ivec2(coords.x, coords.y), val);
+}
