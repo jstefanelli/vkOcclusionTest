@@ -14,7 +14,7 @@ target_link_libraries(vkOcclusionTest PRIVATE SDL2::SDL2 glm::glm Vulkan::Vulkan
 target_include_directories(vkOcclusionTest PRIVATE ${Stb_INCLUDE_DIR})
 target_compile_definitions(vkOcclusionTest PRIVATE VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 GLM_FORCE_DEPTH_ZERO_TO_ONE=1)
 
-set(vkOcclusion_SHADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.frag ${CMAKE_CURRENT_SOURCE_DIR}/shaders/downsample.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/copy.comp)
+set(vkOcclusion_SHADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.frag ${CMAKE_CURRENT_SOURCE_DIR}/shaders/downsample.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/copy.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.frag)
 
 foreach(SHADER IN LISTS vkOcclusion_SHADER_SOURCES)
 	get_filename_component(SHADER_FILENAME ${SHADER} NAME)

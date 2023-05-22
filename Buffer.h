@@ -18,7 +18,7 @@ public:
 	static uint32_t findMemoryType(const vk::ArrayProxy<vk::MemoryType>& types, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
 	Buffer(std::shared_ptr<Instance> instance, size_t bufferSize, vk::BufferUsageFlags bufferFlags, vk::MemoryPropertyFlags memoryFlags);
-	void copy_to(const Buffer& other, vk::CommandBuffer& commandBuffer);
+	void copy_to(const Buffer& other, const vk::CommandBuffer& commandBuffer);
 	inline explicit operator vk::Buffer() const {
 		return buffer;
 	}

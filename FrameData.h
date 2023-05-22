@@ -18,7 +18,6 @@ private:
 	vk::Framebuffer _final_framebuffer;
 	vk::Fence _in_flight_fence;
 	vk::Semaphore _render_in_progress_semaphore;
-	Buffer _globals_buffer;
 	HZBuffer _hzBuffer;
 public:
 	FrameData(std::shared_ptr<Instance> instance, int index, const Swapchain& swapchain, glm::ivec2 hzBufferSize,
@@ -28,7 +27,6 @@ public:
 	FrameData(const FrameData&&) = delete;
 	~FrameData();
 
-	void update_globals(const Push_Constants& data) const;
 	void update_framebuffer(const Swapchain& swapchain);
 
 	inline const vk::Framebuffer& final_framebuffer() const {
@@ -39,9 +37,6 @@ public:
 		return _z_framebuffer;
 	}
 
-	inline const Buffer& globals_buffer() const {
-		return _globals_buffer;
-	}
 
 	inline const vk::CommandBuffer& command_buffer() const {
 		return _command_buffer;

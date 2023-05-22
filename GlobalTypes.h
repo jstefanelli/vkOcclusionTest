@@ -2,34 +2,25 @@
 #define VKOCCLUSIONTEST_GLOBALTYPES_H
 
 #include <glm/glm.hpp>
+#define align_16 alignas(16)
 
-typedef struct Vertex_Data {
-	alignas(16)	glm::vec3 position;
-	alignas(16) glm::vec3 normal;
-	alignas(16) glm::vec3 tangent;
-	alignas(16) glm::vec4 uv;
-	glm::vec4 boneWeights;
-	glm::ivec4 boneIds;
-	glm::vec4 vertexColor;
+#define v3 glm::vec3
+#define v4 glm::vec4
+#define m4 glm::mat4
+#define i4 glm::ivec4
 
-	inline explicit Vertex_Data(glm::vec3 position = {}, glm::vec3 normal = {}, glm::vec3 tangent = {}, glm::vec4 uv = {}, glm::vec4 boneWeights = {}, glm::ivec4 boneIds = {}, glm::vec4 vertexColor = {})
-			: position(position), normal(normal), tangent(tangent), uv(uv), boneWeights(boneWeights), boneIds(boneIds), vertexColor(vertexColor) {
+#include "shaders/libs/structures.glsl"
 
-	}
-} Vertex_Data;
+inline Vertex makeVertex(glm::vec3 position = {}, glm::vec3 normal = {}, glm::vec3 tangent = {}, glm::vec4 uv = {}, glm::vec4 boneWeights = {}, glm::ivec4 boneIds = {}, glm::vec4 vertexColor = {}) {
+	return Vertex(position, normal, tangent, uv, boneWeights, boneIds, vertexColor);
+}
+inline ModelInstance makeInstance(glm::mat4 model = glm::mat4(1.0), int materialId = 0) {
+	return ModelInstance(model, glm::ivec4(materialId));
+}
 
-
-typedef struct Push_Constants {
-	alignas(16) glm::mat4 view;
-	glm::mat4 projection;
-
-	inline explicit Push_Constants(glm::mat4 view, glm::mat4 projection) : view(view), projection(projection) {
-
-	}
-} Push_Constants;
-
-typedef struct {
-	alignas(16) glm::mat4 modelMatrix;
-} Instance_Data;
+#undef v3
+#undef v4
+#undef i4
+#undef m4
 
 #endif //VKOCCLUSIONTEST_GLOBALTYPES_H

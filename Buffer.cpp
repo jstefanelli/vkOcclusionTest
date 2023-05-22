@@ -44,7 +44,7 @@ BufferMapping Buffer::map() const {
 	return {instance->device(), *this};
 }
 
-void Buffer::copy_to(const Buffer &other, vk::CommandBuffer& commandBuffer) {
+void Buffer::copy_to(const Buffer &other, const vk::CommandBuffer& commandBuffer) {
 	commandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit, {}});
 	commandBuffer.copyBuffer(buffer, other.buffer, vk::BufferCopy{ 0, 0, bufferSize });
 	commandBuffer.end();
