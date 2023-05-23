@@ -38,18 +38,26 @@ HZBuffer::HZBuffer(std::shared_ptr<Instance> inst, glm::ivec2 size, const vk::De
 	_downsample_descriptor_sets = instance->create_descriptor_sets(layouts);
 
 	//Fill descriptor sets
+	std::vector<vk::DescriptorImageInfo> imageInfos;
+	imageInfos.reserve(2 * (_texture.levels() - 1));
 	std::vector<vk::WriteDescriptorSet> writeOperations;
 	writeOperations.reserve(2 * (_texture.levels() - 1));
 
 	for(int level = 1; level < _texture.levels(); level++) {
-		vk::DescriptorImageInfo upperInfo(nullptr, _level_views[level - 1], vk::ImageLayout::eGeneral);
-		vk::DescriptorImageInfo lowerInfo(nullptr, _level_views[level], vk::ImageLayout::eGeneral);
+		imageInfos.emplace_back(nullptr, _level_views[level - 1], vk::ImageLayout::eGeneral);
+		imageInfos.emplace_back(nullptr, _level_views[level], vk::ImageLayout::eGeneral);
 
-		writeOperations.emplace_back(_downsample_descriptor_sets[level - 1], 0, 0, vk::DescriptorType::eStorageImage, upperInfo);
-		writeOperations.emplace_back(_downsample_descriptor_sets[level - 1], 1, 0, vk::DescriptorType::eStorageImage, lowerInfo);
+		auto* ptr0 = &imageInfos[(level - 1) * 2];
+		auto* ptr1 = &imageInfos[((level - 1) * 2) + 1];
+		vk::WriteDescriptorSet write0(_downsample_descriptor_sets[level - 1], 0, 0, 1, vk::DescriptorType::eStorageImage, ptr0); //I did not realize the last parameter took a pointer
+		vk::WriteDescriptorSet write1(_downsample_descriptor_sets[level - 1], 1, 0, 1, vk::DescriptorType::eStorageImage, ptr1); //and not a copy....
+
+		writeOperations.push_back(write0);
+		writeOperations.push_back(write1);
 	}
 
 	instance->device().updateDescriptorSets(writeOperations, nullptr);
+	instance->device().waitIdle();
 }
 
 HZBuffer::~HZBuffer() {
