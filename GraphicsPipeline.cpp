@@ -2,7 +2,7 @@
 #include "Utils.h"
 
 GraphicsPipeline::GraphicsPipeline(std::shared_ptr<Instance> _instance, const std::filesystem::path& vsPath, const std::filesystem::path& fsPath,
-								   const std::vector<vk::DescriptorSetLayoutBinding>& bindings, const std::vector<vk::SubpassDependency>& dependencies,
+								   const std::vector<std::vector<vk::DescriptorSetLayoutBinding>>& bindings, const std::vector<vk::SubpassDependency>& dependencies,
 								   const std::vector<GraphicsPipelineAttachment>& colorAttachmentFormats, const std::optional<GraphicsPipelineAttachment>& depthFormat)
 								   : instance(std::move(_instance)) {
 
@@ -21,9 +21,12 @@ GraphicsPipeline::GraphicsPipeline(std::shared_ptr<Instance> _instance, const st
 	std::vector<vk::DynamicState> dynamicState = { vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eCullMode };
 	vk::PipelineDynamicStateCreateInfo dynamicStateInfo({}, dynamicState );
 
-	_descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	for(auto& b : bindings) {
+		auto _descriptor_set_layout = device.createDescriptorSetLayout({{}, b});
+		_descriptor_set_layouts.push_back(_descriptor_set_layout);
+	}
 
-	_pipeline_layout = device.createPipelineLayout({ {}, _descriptor_set_layout });
+	_pipeline_layout = device.createPipelineLayout({ {}, _descriptor_set_layouts });
 
 
 	std::vector<vk::AttachmentDescription> colorAttachments;
@@ -89,9 +92,10 @@ GraphicsPipeline::~GraphicsPipeline() {
 		device.destroyPipeline(pipeline());
 	}
 
-	if (_descriptor_set_layout) {
-		device.destroyDescriptorSetLayout(_descriptor_set_layout);
+	for(auto& l : _descriptor_set_layouts) {
+		device.destroyDescriptorSetLayout(l);
 	}
+	_descriptor_set_layouts.clear();
 
 	if (_render_pass) {
 		device.destroyRenderPass(_render_pass);

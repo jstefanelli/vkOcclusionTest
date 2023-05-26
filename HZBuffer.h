@@ -15,6 +15,7 @@ private:
 	Texture _depth_texture;
 	std::vector<glm::ivec2> _sizes;
 	vk::ImageView _depth_view;
+	vk::ImageView _full_view;
 	std::vector<vk::ImageView> _level_views;
 	std::vector<vk::DescriptorSet> _downsample_descriptor_sets;
 public:
@@ -31,6 +32,10 @@ public:
 
 	inline const vk::ImageView& depth_view() const {
 		return _depth_view;
+	}
+
+	inline const vk::ImageView& full_view() const {
+		return _full_view;
 	}
 
 	inline const std::vector<glm::ivec2>& sizes() const {

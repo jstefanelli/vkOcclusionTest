@@ -28,9 +28,11 @@ struct Vertex {
 	v4 vertexColor;
 };
 
-struct ModelInstance {
+struct ObjectInstance {
 	align_16 m4 model;
-	i4 materialId; //last 3 components are padding....
+	i4 materialMeshBatchId; //last component is padding
+	v4 bbCenter; //last component is padding
+	v4 bbSize; //last component is padding
 };
 
 struct UniformData {
@@ -41,4 +43,18 @@ struct UniformData {
 struct MaterialData {
 	align_16 v4 overrideColor;
 	i4 textureIds;
+};
+
+struct DrawBatch {
+	align_16 int meshId;
+	int materialId;
+	int amount;
+	int padding;
+};
+
+struct DrawCommand {
+	align_16 uint vertexCount;
+	uint instanceCount;
+	uint firstVertex;
+	uint firstInstance;
 };

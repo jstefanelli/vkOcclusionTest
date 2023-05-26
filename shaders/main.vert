@@ -8,14 +8,15 @@ layout(std430, set = 0, binding = 0) buffer VTX {
 	Vertex vertices[];
 };
 
-layout(std430, set = 0, binding = 1) buffer INST {
-	ModelInstance instances[];
-};
-
-layout(std140, set = 0, binding = 2) uniform UniformBuffer {
+layout(std140, set = 0, binding = 1) uniform UniformBuffer {
 	mat4 view;
 	mat4 projection;
 };
+
+layout(std430, set = 1, binding = 0) buffer INST {
+	ObjectInstance instances[];
+};
+
 
 layout(location = 0) out vec4 vVertexColor;
 

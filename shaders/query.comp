@@ -1,0 +1,140 @@
+#version 450
+#include "libs/structures.glsl"
+
+layout(std140, set = 0, binding = 0) uniform UB {
+	UniformData matrices;
+};
+
+layout(std430, set = 1, binding = 0) buffer INST {
+	ObjectInstance instances[];
+};
+layout(std430, set = 1, binding = 1) buffer INDIRECT {
+	uint indirections[];
+};
+
+layout(set = 2, binding = 0) uniform sampler2D hzb;
+layout(set = 2, binding = 1) buffer CMDS {
+	DrawCommand commands[];
+};
+
+layout(push_constant) uniform CNST {
+	uint max_ids;
+};
+
+layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
+
+const vec3 corners[8] = vec3[](
+	vec3(-0.5, 0.5, 0.5),
+	vec3(-0.5, -0.5, 0.5),
+	vec3(-0.5, -0.5, -0.5),
+	vec3(-0.5, 0.5, -0.5),
+	vec3(0.5, 0.5, 0.5),
+	vec3(0.5, -0.5, 0.5),
+	vec3(0.5, -0.5, -0.5),
+	vec3(0.5, 0.5, -0.5)
+);
+
+vec3[8] getCorners(vec3 bbCenter, vec3 bbSize, mat4 model, mat4 vp) {
+	vec3[8] c;
+
+	for (int i = 0; i < 8; i++) {
+		vec4 p4 = vp * model * vec4(bbCenter + (bbSize * corners[i]), 1.0);
+		c[i] = p4.xyz / p4.w;
+
+		c[i] += vec3(1.0, 1.0, 0.0);
+		c[i] *= vec3(0.5, 0.5, 1.0);
+	}
+
+	return c;
+}
+
+bool frustumCull(vec3[8] my_corners) {
+	int outsideLeft = 0, outsideTop = 0, outsideRight = 0, outsideBottom = 0, outsideFront = 0, outsideBack = 0;
+
+	for(int i = 0; i < 8; i++) {
+		vec3 p = my_corners[i];
+
+		outsideLeft += (p.x < 0.0 ? 1 : 0);
+		outsideTop += (p.y > 1.0 ? 1 : 0);
+		outsideRight += (p.x > 1.0 ? 1 : 0);
+		outsideBottom += (p.y < 0.0 ? 1 : 0);
+		outsideFront += + (p.z > 1.0 ? 1 : 0);
+		outsideBack += (p.z < -1.0 ? 1 : 0);
+	}
+
+	return outsideLeft < 8 && outsideTop < 8 && outsideRight < 8 && outsideBottom < 8 && outsideFront < 8 && outsideBack < 8;
+}
+
+bool checkHZB(vec4 sbox, float level, float min_z, bool visible) {
+	vec4 samples;
+	samples.x = textureLod(hzb, sbox.xy, level).x;
+	samples.y = textureLod(hzb, sbox.zy, level).x;
+	samples.z = textureLod(hzb, sbox.xw, level).x;
+	samples.w = textureLod(hzb, sbox.zw, level).x;
+
+	float max_z = max(max(samples.x, samples.y), max(samples.z, samples.w));
+	visible = visible && min_z <= max_z;
+
+	return visible;
+}
+
+void GetScreenBounds(vec3[8] my_corners, inout float min_z, inout vec4 sbox) {
+	vec3 p = my_corners[0];
+	sbox = p.xyxy;
+	min_z = p.z;
+
+	for(int i = 1; i < 8; i++) {
+		p = my_corners[i];
+		sbox.xy = min(sbox.xy, p.xy);
+		sbox.zw = max(sbox.zw, p.xy);
+		min_z = min(min_z, p.z);
+	}
+
+}
+
+bool RunOcclusionCulling(ObjectInstance inst) {
+	mat4 vp = matrices.projection * matrices.view;
+
+	vec3[8] my_corners = getCorners(inst.bbCenter.xyz, inst.bbSize.xyz, inst.model, vp);
+	bool is_visible = frustumCull(my_corners);
+
+	float min_z = 0.0;
+	vec4 sbox = vec4(0.0);
+
+	GetScreenBounds(my_corners, min_z, sbox);
+
+	vec4 sbox_vp = sbox * textureSize(hzb, 0).xyxy;
+	vec2 size = sbox_vp.zw - sbox_vp.xy;
+	float level = ceil(log2(max(size.x, size.y)));
+
+	float level_lower = max(level - 1.0, 0.0);
+	vec2 scale = vec2(exp2(-level_lower));
+	vec2 a = floor(sbox_vp.xy * scale);
+	vec2 b = floor(sbox_vp.zw * scale);
+	vec2 dims = b - a;
+
+	// Use the lower level if we only touch <= 2 texels in both dimensions
+	if (dims.x <= 2 && dims.y <= 2) {
+		level = level_lower;
+	}
+
+	return checkHZB(sbox, level, min_z, is_visible);
+}
+
+void main() {
+	int id = int(gl_GlobalInvocationID.x);
+	if (id >= max_ids) {
+		return;
+	}
+
+	ObjectInstance inst = instances[id];
+
+	bool is_visible = RunOcclusionCulling(inst);
+
+	if (is_visible) {
+		uint pos = atomicAdd(commands[inst.materialMeshBatchId.z].instanceCount, 1);
+		pos += commands[inst.materialMeshBatchId.z].firstInstance;
+
+		indirections[pos] = id;
+	}
+}

@@ -32,7 +32,8 @@ Texture::Texture(std::shared_ptr<Instance> inst, vk::Format format, vk::ImageUsa
 			continue;
 		}
 
-		if ((t.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal && (instance->memory_properties().memoryHeaps[t.heapIndex].flags & vk::MemoryHeapFlagBits::eDeviceLocal) == vk::MemoryHeapFlagBits::eDeviceLocal) {
+		if ((t.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal &&
+			(instance->memory_properties().memoryHeaps[t.heapIndex].flags & vk::MemoryHeapFlagBits::eDeviceLocal) == vk::MemoryHeapFlagBits::eDeviceLocal) {
 			memoryIndex = index;
 			any = true;
 			break;
@@ -94,4 +95,35 @@ bool Texture::fill_from_file(const vk::CommandBuffer& cmd, const std::filesystem
 	return true;
 }
 
+bool Texture::fill_from_data(const vk::CommandBuffer &cmd, const std::vector<uint8_t> &data, uint32_t level,
+							 uint32_t channels, vk::ImageLayout targetLayout) {
+	level = glm::max(level, 1U);
 
+	auto targetWidth = _size.x, targetHeight = _size.y;
+	for(int i = 0; i < level; i++) {
+		targetWidth = glm::max(targetWidth / 2, 1);
+		targetHeight = glm::max(targetHeight / 2, 1);
+	}
+
+	if (targetWidth * targetHeight * channels > data.size()) {
+		return false;
+	}
+
+	auto buffer = Buffer(instance, targetWidth * targetHeight * channels, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+	{
+		auto map = buffer.map();
+		std::memcpy(static_cast<void*>(map), data.data(), buffer.size());
+	}
+
+	vk::ImageSubresourceRange subResourceRange( vk::ImageAspectFlagBits::eColor, level, 1, 0, 1);
+	vk::ImageMemoryBarrier transfer_barrier(vk::AccessFlagBits::eNone, vk::AccessFlagBits::eTransferWrite, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, {}, {}, _image, subResourceRange);
+
+	cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, transfer_barrier);
+
+	vk::BufferImageCopy imageCopy(0, 0, 0, { vk::ImageAspectFlagBits::eColor, level, 0, 1}, { targetWidth, targetHeight, 1});
+	cmd.copyBufferToImage(static_cast<vk::Buffer>(buffer), _image, vk::ImageLayout::eTransferDstOptimal, imageCopy);
+
+	vk::ImageMemoryBarrier readable_barrier(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eTransferDstOptimal, targetLayout, {}, {}, _image, subResourceRange);
+	cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eVertexShader | vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, readable_barrier);
+	return true;
+}

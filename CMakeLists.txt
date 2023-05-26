@@ -9,12 +9,17 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(Vulkan REQUIRED)
 
-add_executable(vkOcclusionTest main.cpp GraphicsPipeline.cpp GraphicsPipeline.h Buffer.cpp Buffer.h Instance.cpp Instance.h Swapchain.cpp Swapchain.h GlobalTypes.h FrameData.cpp FrameData.h Texture.cpp Texture.h HZBuffer.cpp HZBuffer.h ComputePipeline.cpp ComputePipeline.h Utils.cpp Utils.h Sampler.cpp Sampler.h)
+add_executable(vkOcclusionTest main.cpp GraphicsPipeline.cpp GraphicsPipeline.h Buffer.cpp Buffer.h Instance.cpp Instance.h
+		Swapchain.cpp Swapchain.h GlobalTypes.h FrameData.cpp FrameData.h Texture.cpp Texture.h HZBuffer.cpp HZBuffer.h
+		ComputePipeline.cpp ComputePipeline.h Utils.cpp Utils.h Sampler.cpp Sampler.h Mesh.cpp Mesh.h Scene.cpp Scene.h
+		Transform.cpp Transform.h PipelineCollection.cpp PipelineCollection.h)
 target_link_libraries(vkOcclusionTest PRIVATE SDL2::SDL2 glm::glm Vulkan::Vulkan)
 target_include_directories(vkOcclusionTest PRIVATE ${Stb_INCLUDE_DIR})
 target_compile_definitions(vkOcclusionTest PRIVATE VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 GLM_FORCE_DEPTH_ZERO_TO_ONE=1)
 
-set(vkOcclusion_SHADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.frag ${CMAKE_CURRENT_SOURCE_DIR}/shaders/downsample.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/copy.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.frag)
+set(vkOcclusion_SHADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/main.frag
+		${CMAKE_CURRENT_SOURCE_DIR}/shaders/downsample.comp ${CMAKE_CURRENT_SOURCE_DIR}/shaders/copy.comp
+		${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.vert ${CMAKE_CURRENT_SOURCE_DIR}/shaders/full.frag ${CMAKE_CURRENT_SOURCE_DIR}/shaders/query.comp)
 
 foreach(SHADER IN LISTS vkOcclusion_SHADER_SOURCES)
 	get_filename_component(SHADER_FILENAME ${SHADER} NAME)
@@ -22,7 +27,7 @@ foreach(SHADER IN LISTS vkOcclusion_SHADER_SOURCES)
 	add_custom_command(OUTPUT ${SHADER_OUTPUT}
 			COMMAND ${Vulkan_GLSLC_EXECUTABLE} ${SHADER} -o ${SHADER_OUTPUT}
 			DEPENDS ${SHADER}
-			COMMENT "Compiling SPIR-V Shader ${SHADER}")
+			COMMENT "Compiling SPIR-V Shader ${SHADER_OUTPUT}")
 	list(APPEND vkOcclusion_COMPILED_SHADERS ${SHADER_OUTPUT})
 endforeach()
 

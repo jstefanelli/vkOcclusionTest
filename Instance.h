@@ -3,8 +3,10 @@
 
 #include <vulkan/vulkan.hpp>
 #include <SDL2/SDL.h>
+#include <memory>
 
 class Swapchain;
+class Buffer;
 
 class Instance {
 private:
@@ -21,6 +23,7 @@ private:
 	uint32_t _graphics_index;
 	uint32_t _present_index;
 	uint32_t _compute_index;
+	std::unique_ptr<Buffer> _transfer_buffer;
 public:
 	Instance(SDL_Window* window);
 	~Instance();
@@ -28,6 +31,7 @@ public:
 	void create_device(const Swapchain& swapchain);
 	void wait_idle() const;
 	std::vector<vk::DescriptorSet> create_descriptor_sets(const vk::ArrayProxy<vk::DescriptorSetLayout>& info);
+	static const std::unique_ptr<Buffer>& get_transfer_buffer(const std::shared_ptr<Instance>& instance, size_t size);
 
 	inline const vk::Instance& instance() const {
 		return _instance;

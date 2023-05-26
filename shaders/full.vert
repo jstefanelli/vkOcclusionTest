@@ -8,14 +8,19 @@ layout(std430, set = 0, binding = 0) buffer VTX {
 	Vertex vertices[];
 };
 
-layout(std430, set = 0, binding = 1) buffer INST {
-	ModelInstance instances[];
-};
-
-layout(std140, set = 0, binding = 2) uniform UniformBuffer {
+layout(std140, set = 0, binding = 1) uniform UniformBuffer {
 	mat4 view;
 	mat4 projection;
 };
+
+layout(std430, set = 1, binding = 0) buffer INST {
+	ObjectInstance instances[];
+};
+
+layout(std430, set = 1, binding = 1) buffer INDIRECT {
+	uint indirections[];
+};
+
 
 layout(location = 0) out vec3 vViewPos;
 layout(location = 1) out vec3 vNormal;
@@ -23,10 +28,10 @@ layout(location = 2) out vec3 vTangent;
 layout(location = 3) out vec3 vBiTangent;
 layout(location = 4) out vec4 vUv;
 layout(location = 5) out vec4 vVerexColor;
-layout(location = 6) flat out ivec4 vMaterialId;
+layout(location = 6) flat out ivec4 vMaterialMeshBatchId;
 
 void main() {
-	ModelInstance instance = instances[gl_InstanceIndex];
+	ObjectInstance instance = instances[indirections[gl_InstanceIndex]];
 	Vertex vertex = vertices[gl_VertexIndex];
 
 	vec4 viewPos = view * instance.model * vec4(vertex.position, 1.0);
@@ -40,5 +45,5 @@ void main() {
 	vBiTangent = cross(vNormal, vTangent);
 	vUv = vertex.uv;
 	vVerexColor = vertex.vertexColor;
-	vMaterialId = instance.materialId;
+	vMaterialMeshBatchId = instance.materialMeshBatchId;
 }

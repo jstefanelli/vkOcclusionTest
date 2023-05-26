@@ -3,13 +3,18 @@
 #include <stdexcept>
 
 ComputePipeline::ComputePipeline(std::shared_ptr<Instance> inst, const std::filesystem::path &shaderPath,
-								 const std::vector<vk::DescriptorSetLayoutBinding> &descriptorBindings) : instance(std::move(inst)) {
+								 const std::vector<std::vector<vk::DescriptorSetLayoutBinding>> &descriptorBindings,
+								 const std::vector<vk::PushConstantRange>& pushConstants) : instance(std::move(inst)) {
 	auto mod = createShaderModule(shaderPath, instance->device());
 
 	_modules.push_back(mod);
 
-	_descriptor_layout = instance->device().createDescriptorSetLayout({{}, descriptorBindings});
-	_pipeline_layout = instance->device().createPipelineLayout({{}, _descriptor_layout});
+	for(auto& b : descriptorBindings) {
+		auto _descriptor_layout = instance->device().createDescriptorSetLayout({{}, b});
+		_descriptor_layouts.push_back(_descriptor_layout);
+	}
+
+	_pipeline_layout = instance->device().createPipelineLayout({{}, _descriptor_layouts, pushConstants });
 
 	vk::PipelineShaderStageCreateInfo shaderStage( {}, vk::ShaderStageFlagBits::eCompute, mod, "main");
 
@@ -33,9 +38,10 @@ ComputePipeline::~ComputePipeline() {
 		instance->device().destroyPipelineLayout(_pipeline_layout);
 	}
 
-	if (_descriptor_layout) {
-		instance->device().destroyDescriptorSetLayout(_descriptor_layout);
+	for(auto& l : _descriptor_layouts) {
+		instance->device().destroyDescriptorSetLayout(l);
 	}
+	_descriptor_layouts.clear();
 
 	for(auto& mod : _modules) {
 		instance->device().destroyShaderModule(mod);

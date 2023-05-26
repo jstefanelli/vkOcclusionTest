@@ -1,11 +1,12 @@
 #version 450
 #include "libs/structures.glsl"
-
-layout(std430, set = 3, binding = 0) buffer MATS {
+/*
+layout(std430, set = 2, binding = 0) buffer MATS {
 	MaterialData materials[];
 };
 
-layout(set = 3, binding = 4) uniform sampler2D[4] textures;
+layout(set = 2, binding = 1) uniform sampler2D[4] textures;
+*/
 
 layout(location = 0) in vec3 vViewPos;
 layout(location = 1) in vec3 vNormal;
@@ -13,12 +14,12 @@ layout(location = 2) in vec3 vTangent;
 layout(location = 3) in vec3 vBiTangent;
 layout(location = 4) in vec4 vUv;
 layout(location = 5) in vec4 vVertexColor;
-layout(location = 6) flat in ivec4 vMaterialId;
+layout(location = 6) flat in ivec4 vMaterialMeshBatchId;
 
 layout(location = 0) out vec4 oColor;
-
-void main() {
-	MaterialData mat = materials[vMaterialId.x];
+/*
+vec4 calcRealColor() {
+	MaterialData mat = materials[vMaterialMeshBatchId.x];
 
 	vec4 textureFactors = vec4(mat.textureIds.x != 0 ? 1.0 : 0.0, mat.textureIds.y != 0 ? 1.0 : 0.0, mat.textureIds.z != 0 ? 1.0 : 0.0, mat.textureIds.w != 0 ? 1.0 : 0.0);
 	ivec4 textureIds = clamp(mat.textureIds - ivec4(1, 1, 1, 1), ivec4(0, 0, 0, 0), ivec4(3, 3, 3, 3));
@@ -28,5 +29,11 @@ void main() {
 	vec4 val2 = texture(textures[textureIds.z], vUv.xy) * vec4(textureFactors.z);
 	vec4 val3 = texture(textures[textureIds.w], vUv.xy) * vec4(textureFactors.w);
 
-	oColor = (val0 + val1 + val2 + val3) * mat.overrideColor * vVertexColor;
+	return (val0 + val1 + val2 + val3) * mat.overrideColor * vVertexColor;
+}
+*/
+
+void main() {
+	//TODO: Actrually use materials and colors...
+	oColor = vVertexColor;
 }

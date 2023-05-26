@@ -35,7 +35,8 @@ bool Swapchain::create_swapchain(glm::ivec2 sz) {
 	sz.y = glm::clamp(sz.y, (int) surfaceCapabilities.minImageExtent.height, (int) surfaceCapabilities.maxImageExtent.height);
 
 	vk::SwapchainCreateInfoKHR swapchainCreateInfo({}, _surface, surfaceCapabilities.minImageCount, _surface_format.format, _surface_format.colorSpace,
-												   vk::Extent2D(sz.x, sz.y), 1, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment, {}, nullptr, surfaceCapabilities.currentTransform,
+												   vk::Extent2D(sz.x, sz.y), 1, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eTransferDst,
+												   {}, nullptr, surfaceCapabilities.currentTransform,
 												   vk::CompositeAlphaFlagBitsKHR::eOpaque, vk::PresentModeKHR::eFifo, true);
 
 	std::vector<uint32_t> queueFamilyIndices { (uint32_t) instance->graphics_queue_index() };
@@ -70,11 +71,6 @@ bool Swapchain::destroy_swapchain() {
 
 	instance->wait_idle();
 
-	for(auto& fb : _frame_buffers) {
-		instance->device().destroyFramebuffer(fb);
-	}
-	_frame_buffers.clear();
-
 	for(auto& img : _image_views) {
 		instance->device().destroyImageView(img);
 	}
@@ -88,20 +84,4 @@ bool Swapchain::destroy_swapchain() {
 Swapchain::~Swapchain() {
 	destroy_swapchain();
 	instance->instance().destroySurfaceKHR(_surface);
-}
-
-bool Swapchain::create_framebuffers(const vk::RenderPass &pass) {
-	if(!_swapchain) {
-		return false;
-	}
-
-	for (auto& v : _image_views) {
-		std::array<vk::ImageView, 1> attachments = {
-				v
-		};
-
-		_frame_buffers.push_back(instance->device().createFramebuffer({{}, pass, attachments, (uint32_t) _size.x, (uint32_t) _size.y, 1}));
-	}
-
-	return true;
 }

@@ -2,6 +2,7 @@
 #include <SDL2/SDL_vulkan.h>
 #include <stdexcept>
 #include "Swapchain.h"
+#include "Buffer.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -154,4 +155,12 @@ Instance::~Instance() {
 
 std::vector<vk::DescriptorSet> Instance::create_descriptor_sets(const vk::ArrayProxy<vk::DescriptorSetLayout>& info) {
 	return _device.allocateDescriptorSets({_descriptor_pool, info});
+}
+
+const std::unique_ptr<Buffer> &Instance::get_transfer_buffer(const std::shared_ptr<Instance>& instance, size_t size) {
+	if (instance->_transfer_buffer == nullptr || instance->_transfer_buffer->size() < size) {
+		instance->_transfer_buffer = std::make_unique<Buffer>(instance, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+	}
+
+	return instance->_transfer_buffer;
 }

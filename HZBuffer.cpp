@@ -32,6 +32,9 @@ HZBuffer::HZBuffer(std::shared_ptr<Instance> inst, glm::ivec2 size, const vk::De
 	vk::ImageViewCreateInfo depthViewInfo({}, _depth_texture.image(), vk::ImageViewType::e2D, _depth_texture.format(), mapping, {vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
 	_depth_view = instance->device().createImageView(depthViewInfo);
 
+	vk::ImageViewCreateInfo fullViewInfo({}, _texture.image(), vk::ImageViewType::e2D, _texture.format(), mapping, {vk::ImageAspectFlagBits::eColor, 0, _texture.levels(), 0, 1});
+	_full_view = instance->device().createImageView(fullViewInfo);
+
 	//Create descriptor sets
 	std::vector<vk::DescriptorSetLayout> layouts(_texture.levels() - 1, downsampleLayout);
 
@@ -66,6 +69,7 @@ HZBuffer::~HZBuffer() {
 	}
 
 	instance->device().destroyImageView(_depth_view);
+	instance->device().destroyImageView(_full_view);
 
 	_level_views.clear();
 	_sizes.clear();

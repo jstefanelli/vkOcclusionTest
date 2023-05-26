@@ -26,12 +26,12 @@ private:
 	vk::Pipeline _pipeline;
 	vk::PipelineLayout _pipeline_layout;
 	vk::RenderPass _render_pass;
-	vk::DescriptorSetLayout _descriptor_set_layout;
+	std::vector<vk::DescriptorSetLayout> _descriptor_set_layouts;
 
 	std::vector<vk::ShaderModule> modules;
 public:
 	GraphicsPipeline(std::shared_ptr<Instance> instance, const std::filesystem::path& vsPath, const std::filesystem::path& fsPath,
-					 const std::vector<vk::DescriptorSetLayoutBinding>& bindings, const std::vector<vk::SubpassDependency>& dependencies,
+					 const std::vector<std::vector<vk::DescriptorSetLayoutBinding>>& bindings, const std::vector<vk::SubpassDependency>& dependencies,
 					 const std::vector<GraphicsPipelineAttachment>& colorAttachments, const std::optional<GraphicsPipelineAttachment>& depthFormat);
 
 	~GraphicsPipeline();
@@ -52,8 +52,8 @@ public:
 		return _render_pass;
 	}
 
-	inline const vk::DescriptorSetLayout& descriptor_set_layout() const {
-		return _descriptor_set_layout;
+	inline const std::vector<vk::DescriptorSetLayout>& descriptor_set_layouts() const {
+		return _descriptor_set_layouts;
 	}
 
 };

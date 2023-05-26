@@ -23,6 +23,7 @@ public:
 	~Texture();
 
 	bool fill_from_file(const vk::CommandBuffer& cmd, const std::filesystem::path& path, uint32_t level, vk::ImageLayout targetLayout = vk::ImageLayout::eShaderReadOnlyOptimal);
+	bool fill_from_data(const vk::CommandBuffer& cmd, const std::vector<uint8_t>& data, uint32_t level, uint32_t channels, vk::ImageLayout targetLayout = vk::ImageLayout::eShaderReadOnlyOptimal);
 
 	inline const vk::Image& image() const {
 		return _image;

@@ -17,22 +17,22 @@ uint32_t Buffer::findMemoryType(const vk::ArrayProxy<vk::MemoryType> &types, uin
 Buffer::Buffer(std::shared_ptr<Instance> _instance, size_t bufferSize, vk::BufferUsageFlags bufferFlags, vk::MemoryPropertyFlags memoryFlags) : instance(std::move(_instance)) {
 	auto device = instance->device();
 
-	buffer = device.createBuffer({ {}, bufferSize, bufferFlags, vk::SharingMode::eExclusive });
-	auto requirements = device.getBufferMemoryRequirements(buffer);
+	_buffer = device.createBuffer({{}, bufferSize, bufferFlags, vk::SharingMode::eExclusive });
+	auto requirements = device.getBufferMemoryRequirements(_buffer);
 	auto idx = findMemoryType(instance->memory_properties().memoryTypes, requirements.memoryTypeBits, memoryFlags);
 
 	bufferMemory = device.allocateMemory({ requirements.size, idx });
-	device.bindBufferMemory(buffer, bufferMemory, 0);
+	device.bindBufferMemory(_buffer, bufferMemory, 0);
 	this->bufferSize = bufferSize;
 }
 
 void Buffer::clean() {
-	if (!buffer) {
+	if (!_buffer) {
 		return;
 	}
 
 	auto device = instance->device();
-	device.destroyBuffer(buffer);
+	device.destroyBuffer(_buffer);
 	device.freeMemory(bufferMemory);
 }
 
@@ -45,15 +45,15 @@ BufferMapping Buffer::map() const {
 }
 
 void Buffer::copy_to(const Buffer &other, const vk::CommandBuffer& commandBuffer) {
-	commandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit, {}});
-	commandBuffer.copyBuffer(buffer, other.buffer, vk::BufferCopy{ 0, 0, bufferSize });
-	commandBuffer.end();
+	//commandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit, {}});
+	commandBuffer.copyBuffer(_buffer, other._buffer, vk::BufferCopy{0, 0, bufferSize });
+	//commandBuffer.end();
 }
 
 BufferMapping::BufferMapping(const vk::Device &device, const Buffer &buffer) : device(device), buffer(buffer) {
-	data = device.mapMemory(buffer.bufferMemory, 0, buffer.size());
+	data = device.mapMemory(buffer.memory(), 0, buffer.size());
 }
 
 BufferMapping::~BufferMapping() {
-	device.unmapMemory(buffer.bufferMemory);
+	device.unmapMemory(buffer.memory());
 }

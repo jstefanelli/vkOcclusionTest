@@ -10,7 +10,7 @@ std::vector<char> readFile(const std::filesystem::path& path);
 template<typename SourceT, typename TargetT>
 std::vector<TargetT> reinterpret_data(const std::vector<SourceT>& data) {
 	if ((data.size() * sizeof(SourceT)) % sizeof(TargetT) != 0) {
-		throw std::runtime_error("Could not convert data type");
+		throw std::runtime_error("Could not convert _data type");
 	}
 
 	auto nextSize = (data.size() * sizeof(SourceT));
